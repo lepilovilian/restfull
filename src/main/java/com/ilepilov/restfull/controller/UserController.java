@@ -6,6 +6,7 @@ import com.ilepilov.restfull.requestmodel.UserDetailsRequestModel;
 import com.ilepilov.restfull.response.*;
 import com.ilepilov.restfull.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -22,6 +23,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @RequestMapping(path = "/{id}",
             method = RequestMethod.GET,
             produces = {
@@ -30,10 +34,8 @@ public class UserController {
             }
     )
     public UserRest getUser(@PathVariable("id") String id) {
-        UserRest returnedUser = new UserRest();
-
         UserDto userDto = userService.getUserById(id);
-        BeanUtils.copyProperties(userDto, returnedUser);
+        UserRest returnedUser = modelMapper.map(userDto, UserRest.class);
 
         return returnedUser;
     }
@@ -51,8 +53,6 @@ public class UserController {
             }
     )
     public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
-        UserRest userRest = new UserRest();
-
         if (userDetails.getEmail().isEmpty() || userDetails.getPassword().isEmpty()) {
             throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         }
@@ -61,12 +61,9 @@ public class UserController {
             throw new NullPointerException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         }
 
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
-
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
         userDto = userService.save(userDto);
-
-        BeanUtils.copyProperties(userDto, userRest);
+        UserRest userRest = modelMapper.map(userDto, UserRest.class);
 
         return userRest;
     }
@@ -85,8 +82,6 @@ public class UserController {
             path = "/{id}"
     )
     public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
-        UserRest userRest = new UserRest();
-
         if (userDetails.getEmail().isEmpty() || userDetails.getPassword().isEmpty()) {
             throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         }
@@ -95,11 +90,10 @@ public class UserController {
             throw new NullPointerException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         }
 
-        UserDto updatedUser = new UserDto();
-        BeanUtils.copyProperties(userDetails, updatedUser);
+        UserDto updatedUser = modelMapper.map(userDetails, UserDto.class);
 
         updatedUser = userService.updateUser(id, updatedUser);
-        BeanUtils.copyProperties(updatedUser, userRest);
+        UserRest userRest = modelMapper.map(updatedUser, UserRest.class);
 
         return userRest;
     }
@@ -140,8 +134,7 @@ public class UserController {
 
         List<UserDto> userDtos = userService.getUsers(page, limit);
         for (UserDto userDto : userDtos) {
-            UserRest userRest = new UserRest();
-            BeanUtils.copyProperties(userDto, userRest);
+            UserRest userRest = modelMapper.map(userDto, UserRest.class);
             usersRest.add(userRest);
         }
 

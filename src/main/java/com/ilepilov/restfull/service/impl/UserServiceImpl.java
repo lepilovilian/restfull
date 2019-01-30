@@ -1,13 +1,14 @@
-package com.ilepilov.restfull.service;
+package com.ilepilov.restfull.service.impl;
 
 import com.ilepilov.restfull.dto.UserDto;
 import com.ilepilov.restfull.entity.UserEntity;
 import com.ilepilov.restfull.exception.UserServiceException;
 import com.ilepilov.restfull.repository.UserRepo;
 import com.ilepilov.restfull.response.ErrorMessages;
-import org.springframework.beans.BeanUtils;
+import com.ilepilov.restfull.service.UserService;
+import com.ilepilov.restfull.service.Utils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -35,6 +37,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
     public UserDto save(UserDto userDto) {
 
@@ -43,16 +48,16 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("User already exists");
         }
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(userDto, userEntity);
-
-        userEntity.setPublicUserId(utils.generateUserId(30));
+        UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
+        userEntity.setPublicUserId(utils.generatePublicId(30));
+        userEntity.getAddresses().forEach(ad -> {
+            ad.setPublicAddressId(utils.generatePublicId(30));
+            ad.setUser(userEntity);
+        });
         userEntity.setEncryptedPassword(passwordEncoder.encode(userDto.getPassword()));
 
         UserEntity storedUserEntity = userRepo.save(userEntity);
-
-        UserDto returnedDto = new UserDto();
-        BeanUtils.copyProperties(storedUserEntity, returnedDto);
+        UserDto returnedDto = modelMapper.map(storedUserEntity, UserDto.class);
 
         return returnedDto;
     }
@@ -61,8 +66,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getUser(String email) {
         UserEntity storedUser = userRepo.findByEmail(email);
 
-        UserDto returnedUser = new UserDto();
-        BeanUtils.copyProperties(storedUser, returnedUser);
+        UserDto returnedUser = modelMapper.map(storedUser, UserDto.class);
 
         return returnedUser;
     }
@@ -70,10 +74,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserById(String id) {
         if (nonNull(id)) {
-            UserDto returnedUser = new UserDto();
-
             UserEntity storedUserEntity = userRepo.findByPublicUserId(id);
-            BeanUtils.copyProperties(storedUserEntity, returnedUser);
+            UserDto returnedUser = modelMapper.map(storedUserEntity, UserDto.class);
 
             return returnedUser;
         } else {
@@ -94,11 +96,10 @@ public class UserServiceImpl implements UserService {
         userDto.setPublicUserId(id);
         userDto.setEncryptedPassword(passwordEncoder.encode(userDtoPassword));
 
-        BeanUtils.copyProperties(userDto, storedUserEntity);
+        storedUserEntity = modelMapper.map(userDto, UserEntity.class);
         UserEntity updatedUserEntity = userRepo.save(storedUserEntity);
 
-        UserDto updatedUserDto = new UserDto();
-        BeanUtils.copyProperties(updatedUserEntity, updatedUserDto);
+        UserDto updatedUserDto = modelMapper.map(updatedUserEntity, UserDto.class);
 
         return updatedUserDto;
     }
@@ -134,8 +135,7 @@ public class UserServiceImpl implements UserService {
 
         List<UserEntity> userEntities = usersPage.getContent();
         for (UserEntity userEntity : userEntities) {
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(userEntity, userDto);
+            UserDto userDto = modelMapper.map(userEntity, UserDto.class);
             userDtos.add(userDto);
         }
 

@@ -2,6 +2,8 @@ package com.ilepilov.restfull.response;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class UserRest {
 
@@ -9,4 +11,5 @@ public class UserRest {
     private String firstName;
     private String lastName;
     private String email;
+    private List<AddressRest> addresses;
 }
