@@ -8,5 +8,7 @@ import java.util.List;
 
 public interface AddressRepo extends PagingAndSortingRepository<AddressEntity, Long> {
 
-    List<AddressEntity> findAllByUserId(Pageable pageable, String userId);
+    List<AddressEntity> findAllByUserId(Pageable pageable, Long userId);
+
+    AddressEntity findByPublicAddressIdAndUserId(String addressId, Long userId);
 }
