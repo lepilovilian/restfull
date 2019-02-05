@@ -14,7 +14,10 @@ public class SecurityConstants {
 
     public static String SIGN_UP_URL;
 
+    public static String EMAIL_VERIFICATION;
+
     public static String TOKEN_SECRET;
+
 
     @Value("${token_expiration_time}")
     public void setExprirationTime(long exprirationTime) {
@@ -29,6 +32,11 @@ public class SecurityConstants {
     @Value("${header_string}")
     public void setHeaderString(String headerString) {
         HEADER_STRING = headerString;
+    }
+
+    @Value("${email_verification_url}")
+    public void setEmailVerificationUrl(String emailVerificationUrl) {
+        EMAIL_VERIFICATION = emailVerificationUrl;
     }
 
     @Value("${sign_up_url}")

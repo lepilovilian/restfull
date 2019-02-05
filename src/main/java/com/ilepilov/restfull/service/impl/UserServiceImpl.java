@@ -143,4 +143,9 @@ public class UserServiceImpl implements UserService {
 
         return userDtos;
     }
+
+    @Override
+    public Boolean verifyEmailToken(String token) {
+        return true;
+    }
 }
